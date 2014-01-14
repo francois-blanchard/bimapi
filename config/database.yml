@@ -21,7 +21,7 @@ test:
 production:
   adapter: postgresql
   encoding: unicode
-  database: binbase
+  database: de619esfei863d
   pool: 5
-  username: binbase
-  password: binbase/32
+  username: ifauyiwoesdopa
+  password: tk34bkYJhmUlOUS-j3W35fnGkf
