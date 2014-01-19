@@ -4,10 +4,10 @@
  
 class ApiKey < ActiveRecord::Base
   # attr_accessible :access_token, :expires_at, :user_id, :active, :application
-  before_create :generate_access_token
-  before_create :set_expiration
+  before_save :generate_access_token
+  before_save :set_expiration
   belongs_to :user
- 
+   
   def expired?
     DateTime.now >= self.expires_at
   end

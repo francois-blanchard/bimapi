@@ -1,11 +1,31 @@
+# update token when auth
+
+# normaliser les messages de retour json (error => true/false, message => , token => )
+# Retour de l'api
+# {
+# 	status => "success|error"
+#	data => {
+#		"post" => { id => 1, ... }
+# 	}
+# 	message => "..."
+# }
+
+module MyErrorFormatter
+  def self.call message, backtrace, options, env
+      { :status => 'error', :message => message }.to_json
+  end
+end
+
 module Bim
   class UserApi < Grape::API
   	version 'v1'
 	format :json
+
+	error_formatter :json, MyErrorFormatter
 	
 	helpers do
 		def authenticate!
-			error!('401 Unauthorized', 401) unless current_user
+			error!('Unauthorized token', 401) unless current_user
 		end
 	 
 		def current_user
@@ -33,9 +53,9 @@ module Bim
 
 			if @user.save
 				key = ApiKey.create(:user_id => @user.id)
-				{ :message => "User was created", :token => key.access_token }
+				{ :status => "success", :data => {:token => key.access_token}, :message => "User was created" }
 			else
-				{ :message => @user.errors }
+				{ :status => "error", :message => @user.errors }
 			end
 		end
 		# ---------------------------------------------------------
@@ -45,14 +65,15 @@ module Bim
 		  requires :password, :type => String, :desc => "Password"
 		end
 		post :login do
-			
+
 			user = User.find_for_authentication(:login => params[:login])
 		 	
 		 	if user && user.valid_password?(params[:password])
-				key = ApiKey.create(:user_id => user.id)
-				{:message => "Auth success", :token => key.access_token}
+				key = ApiKey.where(:user_id => user.id).first
+				key.save
+				{:status => "success", :data => {:token => key.access_token}, :message => "Auth success"}
 		 	else
-				error!('Unauthorized.', 401)
+				error!('Unauthorized token.', 401)
 		  	end
 		end
 		# ---------------------------------------------------------
@@ -62,7 +83,7 @@ module Bim
 		end
 		get :ping do
 		  authenticate!
-		  { :message => "pong" }
+		  { :status => "success", :message => "pong" }
 		end
 	end
 
